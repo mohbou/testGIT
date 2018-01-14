@@ -70,7 +70,7 @@ public class CrimeListFragment extends Fragment {
             mMTitleTextView.setText(crime.getTtitle());
             mMDateTextView.setText(crime.getDate().toString());
             mSolvedImageView.setVisibility(crime.isSolved() ? View.VISIBLE : View.GONE);
-            mSolvedImageView.setVisibility(View.VISIBLE);
+
 
         }
 
