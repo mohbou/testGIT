@@ -28,8 +28,6 @@ public class CrimeListFragment extends Fragment {
 
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
-    public static final int ITEM_TYPE_NORMAL_ROW = 0;
-    public static final int ITEM_TYPE_POLICE_ROW = 1;
     private int mCurrentPosition;
     private boolean mSubtitleVisible;
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
@@ -61,6 +59,7 @@ if(savedInstanceState != null) {
         private TextView mMDateTextView;
         private ImageView mSolvedImageView;
         private Crime mCrime;
+        private int mPosition;
 
         public CrimeHolder(LayoutInflater inflater, ViewGroup parent) {
             super(inflater.inflate(R.layout.list_item_crime, parent, false));
@@ -71,7 +70,8 @@ if(savedInstanceState != null) {
 
         }
 
-        public void bind(Crime crime) {
+        public void bind(Crime crime,int position) {
+            mPosition = position;
             mCrime = crime;
             mMTitleTextView.setText(crime.getTtitle());
             mMDateTextView.setText(crime.getDate().toString());
@@ -82,14 +82,13 @@ if(savedInstanceState != null) {
 
         @Override
         public void onClick(View view) {
-
-            mCurrentPosition = getAdapterPosition();
+            mCurrentPosition = mPosition;
             Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId());
             startActivity(intent);
         }
     }
 
-    private class CrimePoliceHolder extends RecyclerView.ViewHolder
+    /*private class CrimePoliceHolder extends RecyclerView.ViewHolder
             implements View.OnClickListener {
 
         private TextView mMTitleTextView;
@@ -117,9 +116,9 @@ if(savedInstanceState != null) {
             Toast.makeText(getActivity(), mCrime.getTtitle() + " call police!", Toast.LENGTH_SHORT).show();
         }
     }
+*/
 
-
-    private class CrimeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private class CrimeAdapter extends RecyclerView.Adapter<CrimeHolder> {
 
 
         private List<Crime> mCrimes;
@@ -129,41 +128,27 @@ if(savedInstanceState != null) {
         }
 
         @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            if (viewType == ITEM_TYPE_NORMAL_ROW) {
+        public CrimeHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+
                 LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
                 return new CrimeHolder(layoutInflater, parent);
-            } else if (viewType == ITEM_TYPE_POLICE_ROW) {
-                LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-                return new CrimePoliceHolder(layoutInflater, parent);
-            } else
-                return null;
         }
 
         @Override
-        public int getItemViewType(int position) {
-            Crime crime = mCrimes.get(position);
-            if (crime.isRequiresPolice()) {
-                return ITEM_TYPE_POLICE_ROW;
-            } else
-                return ITEM_TYPE_NORMAL_ROW;
+        public void onBindViewHolder(CrimeHolder holder, int position) {
+                Crime crime = mCrimes.get(position);
+                holder.bind(crime,position);
 
-        }
-
-        @Override
-        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-            final int itemType = getItemViewType(position);
-            Crime crime = mCrimes.get(position);
-            if (itemType == ITEM_TYPE_NORMAL_ROW) {
-                ((CrimeHolder) holder).bind(crime);
-            } else if (itemType == ITEM_TYPE_POLICE_ROW) {
-                ((CrimePoliceHolder) holder).bind(crime);
-            }
         }
 
         @Override
         public int getItemCount() {
             return mCrimes.size();
+        }
+
+        public void setCrimes(List<Crime> crimes) {
+            mCrimes =crimes;
+
         }
     }
 
@@ -174,15 +159,16 @@ if(savedInstanceState != null) {
     }
 
     private void updateUI(int position) {
+        CrimeLab crimeLab = CrimeLab.get(getActivity());
+        List<Crime> crimes = crimeLab.getCrimes();
 
         if (mAdapter == null) {
-            CrimeLab crimeLab = CrimeLab.get(getActivity());
-            List<Crime> crimes = crimeLab.getCrimes();
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         } else {
-
+            mAdapter.setCrimes(crimes);
             mAdapter.notifyItemChanged(position);
+            mCurrentPosition = RecyclerView.NO_POSITION;
         }
         updateSubtitle();
     }
