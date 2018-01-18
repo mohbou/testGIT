@@ -9,16 +9,15 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.List;
 
@@ -28,7 +27,7 @@ public class CrimeListFragment extends Fragment {
 
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
-    private int mCurrentPosition;
+    private int mItemUpdatedPosition;
     private boolean mSubtitleVisible;
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
 
@@ -41,14 +40,14 @@ public class CrimeListFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-if(savedInstanceState != null) {
-    mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
-}
+        if (savedInstanceState != null) {
+            mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
+        }
         View v = inflater.inflate(R.layout.fragment_crime_list, container, false);
 
         mCrimeRecyclerView = v.findViewById(R.id.crime_recycler_view);
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        updateUI(mCurrentPosition);
+        updateUI(mItemUpdatedPosition);
         return v;
     }
 
@@ -70,8 +69,8 @@ if(savedInstanceState != null) {
 
         }
 
-        public void bind(Crime crime,int position) {
-            mPosition = position;
+        public void bind(Crime crime, int position) {
+            mPosition = getAdapterPosition();
             mCrime = crime;
             mMTitleTextView.setText(crime.getTtitle());
             mMDateTextView.setText(crime.getDate().toString());
@@ -82,7 +81,7 @@ if(savedInstanceState != null) {
 
         @Override
         public void onClick(View view) {
-            mCurrentPosition = mPosition;
+            mItemUpdatedPosition = mPosition;
             Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId());
             startActivity(intent);
         }
@@ -130,14 +129,14 @@ if(savedInstanceState != null) {
         @Override
         public CrimeHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 
-                LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-                return new CrimeHolder(layoutInflater, parent);
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            return new CrimeHolder(layoutInflater, parent);
         }
 
         @Override
         public void onBindViewHolder(CrimeHolder holder, int position) {
-                Crime crime = mCrimes.get(position);
-                holder.bind(crime,position);
+            Crime crime = mCrimes.get(position);
+            holder.bind(crime, position);
 
         }
 
@@ -147,7 +146,7 @@ if(savedInstanceState != null) {
         }
 
         public void setCrimes(List<Crime> crimes) {
-            mCrimes =crimes;
+            mCrimes = crimes;
 
         }
     }
@@ -155,7 +154,8 @@ if(savedInstanceState != null) {
     @Override
     public void onResume() {
         super.onResume();
-        updateUI(mCurrentPosition);
+        Log.d("Enter", "onResume:  mItemUpdatedPosition "+mItemUpdatedPosition);
+        updateUI(mItemUpdatedPosition);
     }
 
     private void updateUI(int position) {
@@ -166,9 +166,11 @@ if(savedInstanceState != null) {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         } else {
+            Log.d("Enter", "updateUI:  mItemUpdatedPosition"+mItemUpdatedPosition+ " position "+position );
             mAdapter.setCrimes(crimes);
-            mAdapter.notifyItemChanged(position);
-            mCurrentPosition = RecyclerView.NO_POSITION;
+           // mAdapter.notifyItemChanged(mItemUpdatedPosition);
+            mAdapter.notifyDataSetChanged();
+            mItemUpdatedPosition = RecyclerView.NO_POSITION;
         }
         updateSubtitle();
     }
@@ -220,6 +222,6 @@ if(savedInstanceState != null) {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(SAVED_SUBTITLE_VISIBLE,mSubtitleVisible);
+        outState.putBoolean(SAVED_SUBTITLE_VISIBLE, mSubtitleVisible);
     }
 }
