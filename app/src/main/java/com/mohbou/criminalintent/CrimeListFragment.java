@@ -9,16 +9,15 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.List;
 
@@ -28,9 +27,7 @@ public class CrimeListFragment extends Fragment {
 
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
-    public static final int ITEM_TYPE_NORMAL_ROW = 0;
-    public static final int ITEM_TYPE_POLICE_ROW = 1;
-    private int mCurrentPosition;
+    private int mItemUpdatedPosition;
     private boolean mSubtitleVisible;
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
 
@@ -43,14 +40,14 @@ public class CrimeListFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-if(savedInstanceState != null) {
-    mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
-}
+        if (savedInstanceState != null) {
+            mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
+        }
         View v = inflater.inflate(R.layout.fragment_crime_list, container, false);
 
         mCrimeRecyclerView = v.findViewById(R.id.crime_recycler_view);
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        updateUI(mCurrentPosition);
+        updateUI(mItemUpdatedPosition);
         return v;
     }
 
@@ -61,6 +58,7 @@ if(savedInstanceState != null) {
         private TextView mMDateTextView;
         private ImageView mSolvedImageView;
         private Crime mCrime;
+        private int mPosition;
 
         public CrimeHolder(LayoutInflater inflater, ViewGroup parent) {
             super(inflater.inflate(R.layout.list_item_crime, parent, false));
@@ -71,7 +69,8 @@ if(savedInstanceState != null) {
 
         }
 
-        public void bind(Crime crime) {
+        public void bind(Crime crime, int position) {
+            mPosition = getAdapterPosition();
             mCrime = crime;
             mMTitleTextView.setText(crime.getTtitle());
             mMDateTextView.setText(crime.getDate().toString());
@@ -82,14 +81,13 @@ if(savedInstanceState != null) {
 
         @Override
         public void onClick(View view) {
-
-            mCurrentPosition = getAdapterPosition();
+            mItemUpdatedPosition = mPosition;
             Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId());
             startActivity(intent);
         }
     }
 
-    private class CrimePoliceHolder extends RecyclerView.ViewHolder
+    /*private class CrimePoliceHolder extends RecyclerView.ViewHolder
             implements View.OnClickListener {
 
         private TextView mMTitleTextView;
@@ -117,9 +115,9 @@ if(savedInstanceState != null) {
             Toast.makeText(getActivity(), mCrime.getTtitle() + " call police!", Toast.LENGTH_SHORT).show();
         }
     }
+*/
 
-
-    private class CrimeAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private class CrimeAdapter extends RecyclerView.Adapter<CrimeHolder> {
 
 
         private List<Crime> mCrimes;
@@ -129,60 +127,50 @@ if(savedInstanceState != null) {
         }
 
         @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            if (viewType == ITEM_TYPE_NORMAL_ROW) {
-                LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-                return new CrimeHolder(layoutInflater, parent);
-            } else if (viewType == ITEM_TYPE_POLICE_ROW) {
-                LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-                return new CrimePoliceHolder(layoutInflater, parent);
-            } else
-                return null;
+        public CrimeHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            return new CrimeHolder(layoutInflater, parent);
         }
 
         @Override
-        public int getItemViewType(int position) {
+        public void onBindViewHolder(CrimeHolder holder, int position) {
             Crime crime = mCrimes.get(position);
-            if (crime.isRequiresPolice()) {
-                return ITEM_TYPE_POLICE_ROW;
-            } else
-                return ITEM_TYPE_NORMAL_ROW;
+            holder.bind(crime, position);
 
-        }
-
-        @Override
-        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-            final int itemType = getItemViewType(position);
-            Crime crime = mCrimes.get(position);
-            if (itemType == ITEM_TYPE_NORMAL_ROW) {
-                ((CrimeHolder) holder).bind(crime);
-            } else if (itemType == ITEM_TYPE_POLICE_ROW) {
-                ((CrimePoliceHolder) holder).bind(crime);
-            }
         }
 
         @Override
         public int getItemCount() {
             return mCrimes.size();
         }
+
+        public void setCrimes(List<Crime> crimes) {
+            mCrimes = crimes;
+
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        updateUI(mCurrentPosition);
+        Log.d("Enter", "onResume:  mItemUpdatedPosition "+mItemUpdatedPosition);
+        updateUI(mItemUpdatedPosition);
     }
 
     private void updateUI(int position) {
+        CrimeLab crimeLab = CrimeLab.get(getActivity());
+        List<Crime> crimes = crimeLab.getCrimes();
 
         if (mAdapter == null) {
-            CrimeLab crimeLab = CrimeLab.get(getActivity());
-            List<Crime> crimes = crimeLab.getCrimes();
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         } else {
-
-            mAdapter.notifyItemChanged(position);
+            Log.d("Enter", "updateUI:  mItemUpdatedPosition"+mItemUpdatedPosition+ " position "+position );
+            mAdapter.setCrimes(crimes);
+           // mAdapter.notifyItemChanged(mItemUpdatedPosition);
+            mAdapter.notifyDataSetChanged();
+            mItemUpdatedPosition = RecyclerView.NO_POSITION;
         }
         updateSubtitle();
     }
@@ -234,6 +222,6 @@ if(savedInstanceState != null) {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(SAVED_SUBTITLE_VISIBLE,mSubtitleVisible);
+        outState.putBoolean(SAVED_SUBTITLE_VISIBLE, mSubtitleVisible);
     }
 }
