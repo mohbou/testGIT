@@ -26,6 +26,8 @@ import android.widget.EditText;
 import java.util.Date;
 import java.util.UUID;
 
+import io.realm.Realm;
+
 import static android.widget.CompoundButton.*;
 
 
@@ -40,9 +42,10 @@ public class CrimeFragment extends Fragment {
     private EditText mTitleField;
     private Button mDateButton;
     private CheckBox mSolvedCheckBox;
+    private Realm mRealm;
 
 
-    public static CrimeFragment newInstance(UUID crimeId) {
+    public static CrimeFragment newInstance(String crimeId) {
 
         Bundle args = new Bundle();
         args.putSerializable(ARG_CRIME_ID, crimeId);
@@ -56,8 +59,12 @@ public class CrimeFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
-        mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
+        mRealm = Realm.getDefaultInstance();
+
+
+        String crimeId = (String) getArguments().getSerializable(ARG_CRIME_ID);
+        mCrime = CrimeLab.get(getActivity(),mRealm).getCrime(crimeId);
+
     }
 
     @Nullable
@@ -131,19 +138,34 @@ public class CrimeFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.crime_fragment, menu);
+        inflater.inflate(R.menu.fragment_crime, menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.menu_delete_crime:
-                CrimeLab.get(getActivity()).removeCrime(mCrime);
+            case R.id.crime_delete:
+                CrimeLab.get(getActivity(),mRealm).removeCrime(mCrime);
                 getActivity().finish();
                 return true;
 
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(mRealm!=null)
+            mRealm.close();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.d("mid3", "CrimeFragment Enters onPause: "+mCrime.getTtitle());
+        CrimeLab.get(getActivity(),mRealm).updateCrime(mCrime);
+
     }
 }

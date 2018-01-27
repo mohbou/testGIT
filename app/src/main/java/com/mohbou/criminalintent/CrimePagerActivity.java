@@ -9,12 +9,15 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
 
 import java.util.List;
 import java.util.UUID;
+
+import io.realm.Realm;
 
 
 public class CrimePagerActivity extends AppCompatActivity {
@@ -23,10 +26,11 @@ public class CrimePagerActivity extends AppCompatActivity {
     private Button mFirstButton;
     private Button mLastButton;
     private List<Crime> mCrimes;
+    private Realm mRealm;
 
     private static final String EXTRA_CRIME_ID = "com.mohbou.criminalintent.crime_id";
 
-    public static Intent newIntent(Context packageContext, UUID crimeId) {
+    public static Intent newIntent(Context packageContext, String crimeId) {
         Intent intent = new Intent(packageContext, CrimePagerActivity.class);
         intent.putExtra(EXTRA_CRIME_ID, crimeId);
 
@@ -38,7 +42,8 @@ public class CrimePagerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crime_pager);
 
-        UUID crimeId = (UUID) getIntent()
+        mRealm = Realm.getDefaultInstance();
+        String crimeId = (String) getIntent()
                 .getSerializableExtra(EXTRA_CRIME_ID);
 
         mViewPager = findViewById(R.id.crime_view_pager);
@@ -46,7 +51,9 @@ public class CrimePagerActivity extends AppCompatActivity {
         mFirstButton =  findViewById(R.id.button_first);
         mLastButton = findViewById(R.id.button_last);
 
-        mCrimes = CrimeLab.get(this).getCrimes();
+        mCrimes = CrimeLab.get(this,mRealm).getCrimes();
+
+
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         mViewPager.setAdapter(new FragmentStatePagerAdapter(fragmentManager) {
@@ -81,5 +88,12 @@ public class CrimePagerActivity extends AppCompatActivity {
                 mViewPager.setCurrentItem(mViewPager.getAdapter().getCount());
             }
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(mRealm!=null)
+            mRealm.close();
     }
 }

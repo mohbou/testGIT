@@ -20,6 +20,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.List;
+import java.util.UUID;
+
+import io.realm.Realm;
 
 
 public class CrimeListFragment extends Fragment {
@@ -30,11 +33,13 @@ public class CrimeListFragment extends Fragment {
     private int mItemUpdatedPosition;
     private boolean mSubtitleVisible;
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
+    private Realm mRealm;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        mRealm = Realm.getDefaultInstance();
     }
 
     @Nullable
@@ -159,15 +164,19 @@ public class CrimeListFragment extends Fragment {
     }
 
     private void updateUI(int position) {
-        CrimeLab crimeLab = CrimeLab.get(getActivity());
+        CrimeLab crimeLab = CrimeLab.get(getActivity(),mRealm);
         List<Crime> crimes = crimeLab.getCrimes();
 
         if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         } else {
-            Log.d("Enter", "updateUI:  mItemUpdatedPosition"+mItemUpdatedPosition+ " position "+position );
+            Log.d("mid3", "updateUI: enters on Else");
             mAdapter.setCrimes(crimes);
+            for (Crime crime:
+                 crimes) {
+                Log.d("mid3", "updateUI: loop "+crime.getTtitle()+" id "+crime.getId());
+            }
            // mAdapter.notifyItemChanged(mItemUpdatedPosition);
             mAdapter.notifyDataSetChanged();
             mItemUpdatedPosition = RecyclerView.NO_POSITION;
@@ -194,7 +203,9 @@ public class CrimeListFragment extends Fragment {
         switch (item.getItemId()) {
             case R.id.new_crime:
                 Crime crime = new Crime();
-                CrimeLab.get(getActivity()).addCrime(crime);
+                crime.setId(UUID.randomUUID().toString());
+                Log.d("mid3", "onOptionsItemSelected: "+crime.getId());
+                CrimeLab.get(getActivity(),mRealm).addCrime(crime);
                 Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId());
                 startActivity(intent);
                 return true;
@@ -209,7 +220,7 @@ public class CrimeListFragment extends Fragment {
     }
 
     private void updateSubtitle() {
-        CrimeLab crimeLab = CrimeLab.get(getActivity());
+        CrimeLab crimeLab = CrimeLab.get(getActivity(),mRealm);
         int crimeCount = crimeLab.getCrimes().size();
         String subtitle = getString(R.string.subtitle_format, crimeCount);
         if (!mSubtitleVisible)
@@ -223,5 +234,12 @@ public class CrimeListFragment extends Fragment {
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(SAVED_SUBTITLE_VISIBLE, mSubtitleVisible);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(mRealm!=null)
+            mRealm.close();
     }
 }

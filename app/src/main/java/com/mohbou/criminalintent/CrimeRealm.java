@@ -1,27 +1,24 @@
 package com.mohbou.criminalintent;
 
-import android.util.Log;
-
 import java.util.Date;
 
 
+import io.realm.RealmObject;
 
-public class Crime {
+
+public class CrimeRealm extends RealmObject {
+
     private String mId;
     private String mTtitle;
     private Date mDate;
     private boolean mSolved;
     private boolean mRequiresPolice;
 
-
-    public Crime() {
-
-        Log.d("mid", "Crime id : "+mId);
-    }
     public void setId(String id) {
         mId = id;
     }
-    public String getId() {
+
+    public String  getId() {
         return mId;
     }
 
