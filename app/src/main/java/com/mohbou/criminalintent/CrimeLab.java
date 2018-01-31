@@ -98,6 +98,8 @@ public class CrimeLab {
     }
 
     public void removeCrime(Crime c) {
+
+        Log.d("mid3", "removeCrime: crime id "+c.getId());
         final CrimeRealm crimeRealm = sRealm.where(CrimeRealm.class).equalTo("mId", c.getId()).findFirst();
 
         sRealm.executeTransaction(new Realm.Transaction() {
@@ -111,18 +113,21 @@ public class CrimeLab {
 
     public void updateCrime(final Crime crime) {
 
-
-        sRealm.executeTransaction(new Realm.Transaction() {
-            @Override
-            public void execute(Realm realm) {
-                CrimeRealm crimeRealm = realm.where(CrimeRealm.class).equalTo("mId", crime.getId()).findFirst();
-                crimeRealm.setDate(crime.getDate());
-                crimeRealm.setTtitle(crime.getTtitle());
-                crimeRealm.setSolved(crime.isSolved());
-                Log.d("mid3", "updateCrime execute: "+crimeRealm.getTtitle());
-            }
-        });
-
+        if(crime!=null) {
+            Log.d("mid3", "updateCrime: crime id "+crime.getId());
+            sRealm.executeTransaction(new Realm.Transaction() {
+                @Override
+                public void execute(Realm realm) {
+                    CrimeRealm crimeRealm = realm.where(CrimeRealm.class).equalTo("mId", crime.getId()).findFirst();
+                    if(crimeRealm!=null) {
+                        crimeRealm.setDate(crime.getDate());
+                        crimeRealm.setTtitle(crime.getTtitle());
+                        crimeRealm.setSolved(crime.isSolved());
+                        Log.d("mid3", "updateCrime execute: " + crimeRealm.getTtitle());
+                    }
+                }
+            });
+        }
     }
 
 
