@@ -13,6 +13,7 @@ public class CrimeRealm extends RealmObject {
     private Date mDate;
     private boolean mSolved;
     private boolean mRequiresPolice;
+    private String mSuspect;
 
     public void setId(String id) {
         mId = id;
@@ -52,5 +53,13 @@ public class CrimeRealm extends RealmObject {
 
     public void setRequiresPolice(boolean requiresPolice) {
         mRequiresPolice = requiresPolice;
+    }
+
+    public String getSuspect() {
+        return mSuspect;
+    }
+
+    public void setSuspect(String suspect) {
+        mSuspect = suspect;
     }
 }

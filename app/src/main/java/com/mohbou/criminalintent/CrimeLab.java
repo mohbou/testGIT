@@ -50,6 +50,7 @@ public class CrimeLab {
                         Log.d("mid3", "apply: in getCrimes "+crime.getTtitle());
                         crime.setSolved(crimeRealm.isSolved());
                         crime.setId(crimeRealm.getId());
+                        crime.setSuspect(crimeRealm.getSuspect());
                         return crime;
                     }
                 }).collect(Collectors.<Crime>toList());
@@ -72,6 +73,7 @@ public class CrimeLab {
             crime.setTtitle(crimeRealm.getTtitle());
             crime.setSolved(crimeRealm.isSolved());
             crime.setId(crimeRealm.getId());
+            crime.setSuspect(crimeRealm.getSuspect());
 
             return crime;
         }
@@ -91,6 +93,7 @@ public class CrimeLab {
                 crimeRealm.setTtitle(c.getTtitle());
                 crimeRealm.setSolved(c.isSolved());
                 crimeRealm.setId(c.getId());
+                crimeRealm.setSuspect(c.getSuspect());
                 Log.d("mid3", "addCrime execute: "+c.getId());
 
             }
@@ -123,6 +126,7 @@ public class CrimeLab {
                         crimeRealm.setDate(crime.getDate());
                         crimeRealm.setTtitle(crime.getTtitle());
                         crimeRealm.setSolved(crime.isSolved());
+                        crimeRealm.setSuspect(crime.getSuspect());
                         Log.d("mid3", "updateCrime execute: " + crimeRealm.getTtitle());
                     }
                 }
