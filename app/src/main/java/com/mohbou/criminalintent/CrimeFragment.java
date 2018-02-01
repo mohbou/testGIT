@@ -53,6 +53,8 @@ public class CrimeFragment extends Fragment {
     private Button mSuspectButton;
     private Button mCallButton;
     private Realm mRealm;
+    private Uri contactUrl;
+    private String mContactId;
 
 
     public static CrimeFragment newInstance(String crimeId) {
@@ -162,7 +164,10 @@ public class CrimeFragment extends Fragment {
         mCallButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-//                Intent inttentCall = new Intent(Intent.ACTION_DIAL,)
+
+                Uri number = Uri.parse("tel:"+getContactPhone(getContactID(mCrime.getSuspect())));
+            Intent callIntent = new Intent(Intent.ACTION_DIAL,number);
+            startActivity(callIntent);
             }
         });
         return v;
@@ -201,6 +206,7 @@ public class CrimeFragment extends Fragment {
                 String suspect = c.getString(0);
                 mCrime.setSuspect(suspect);
                 mSuspectButton.setText(suspect);
+                getContactID(suspect);
             } finally {
                 c.close();
             }
@@ -263,26 +269,55 @@ public class CrimeFragment extends Fragment {
         return getString(R.string.crime_report, mCrime.getTtitle(), dateString, solvedString, suspect);
     }
 
-    private  void callSuspect() {
 
-//        Uri contactUrl = data.getData();
-//
-//        String[] queryFields = new String[]{
-//                ContactsContract.Contacts.DISPLAY_NAME
-//        };
-//        Cursor c = getActivity().getContentResolver()
-//                .query(contactUrl, queryFields, null, null, null);
-//        try {
-//            if (c.getCount() == 0) {
-//                return;
-//            }
-//            c.moveToFirst();
-//            String suspect = c.getString(0);
-//            mCrime.setSuspect(suspect);
-//            mSuspectButton.setText(suspect);
-//        } finally {
-//            c.close();
-//        }
+    private String getContactPhone(String contactID) {
+        Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+        String[] projection = null;
+        String where = ContactsContract.CommonDataKinds.Phone.CONTACT_ID +" = ?";
+        String[] selectionArgs = new String[] { contactID };
+        String sortOrder = null;
+        Cursor result = getActivity().getContentResolver()
+                .query(uri, projection, where, selectionArgs, sortOrder);
+        if (result.moveToFirst()) {
+            String phone = result.getString(result.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+            if (phone == null) {
+                Log.d("mid3", "getContactPhone: number null");
+                result.close();
+                return null;
+            }
+            result.close();
+            Log.d("mid3", "getContactPhone: number "+phone);
+            return phone;
+        }
+        Log.d("mid3", "!result.moveToFirst: number null");
+        result.close();
+        return null;
+    }
+
+    private String getContactID(String contactName) {
+        contactUrl = ContactsContract.Data.CONTENT_URI;
+        String[] queryFields = new String[]{
+                ContactsContract.Data.CONTACT_ID
+        };
+
+        String where = ContactsContract.Contacts.DISPLAY_NAME +" = ?";
+        String[] selectionArgs = new String[] { contactName };
+
+        Cursor c = getActivity().getContentResolver()
+                .query(contactUrl, queryFields, where, selectionArgs, null);
+        try {
+            if (c.getCount() == 0) {
+                return null;
+            }
+            c.moveToFirst();
+            mContactId = String.valueOf(c.getLong(0));
+             } finally {
+            c.close();
+        }
+
+        return mContactId;
 
     }
+
+
 }
